@@ -1,0 +1,40 @@
+name: Testing
+
+on:
+  push:
+    branches:
+    - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    # Setup node.js runtime
+    - name: Use Node.js 14.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14.x
+        environment: 'dev'
+
+    - name: Launch Jest Tests
+      run: |
+        npm i
+        npm run build
+        npm run test:jest
+    
+    - name: Launch e2e_chrome Tests
+      run: |
+        touch .env
+        echo 'SP_BASEURL='${{ secrets.SP_BASEURL }} >> .env
+        echo 'SP_USERNAME='${{ secrets.SP_USERNAME }} >> .env
+        echo 'SP_PASSWORD='${{ secrets.SP_PASSWORD }} >> .env
+        npm run testcafe:chrome
+    
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: /**/*junit.xml
